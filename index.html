@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>매출 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-jp.min.css">
+<style>
+  :root{
+    --font-sans:"Pretendard JP","Pretendard JP Variable","Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    --font-display:"Wanted Sans Variable","Wanted Sans","Pretendard JP",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    --color-bg-base:#ffffff;--color-bg-subtle:#f7f7f8;--color-bg-muted:rgba(112,115,124,0.08);
+    --color-fg-neutral-primary:#000;--color-fg-neutral-strong:#171719;--color-fg-neutral:rgba(46,47,51,0.88);--color-fg-neutral-subtle:rgba(55,56,60,0.61);--color-fg-neutral-muted:rgba(112,115,124,0.61);
+    --color-line-neutral:rgba(112,115,124,0.22);--color-line-neutral-subtle:rgba(112,115,124,0.16);
+    --color-primary:#0066ff;--color-state-hover:rgba(112,115,124,0.08);
+    --color-blue-400:#69a5ff;--color-blue-600:#0066ff;--color-purple-500:#7d5ef7;--color-cyan-600:#00bdde;--color-coolNeutral-300:#c2c4c8;--color-coolNeutral-400:#aeb0b6;
+    --shadow-emphasize:0 1px 4px 0 rgba(0,0,0,0.08),0 0 1px 0 rgba(0,0,0,0.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--color-bg-subtle);color:var(--color-fg-neutral-strong);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+  .btn-export:hover{background:var(--color-state-hover)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   매출 대시보드 — vanilla port of the Claude Design prototype.
+   Sales figures are deterministic mock data (units: 만원).
+   Swap the numbers in DATA below with real figures to go live.
+   ============================================================ */
+
+// ---- mock data ---------------------------------------------------------
+function buildData() {
+  const monthly = {
+    labels: ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"],
+    rev: [12400,11800,14600,13900,16200,15400,18100,17300,19800,21500,20400,23800],
+    target: 20000, div: 18.5, xstep: 1,
+  };
+  const weekly = {
+    labels: ["10/06","10/13","10/20","10/27","11/03","11/10","11/17","11/24","12/01","12/08","12/15","12/22"],
+    rev: [4180,4320,4510,4390,4720,4880,4650,5010,5180,4990,5240,5460],
+    target: 5000, div: 17.5, xstep: 2,
+  };
+  // daily — 30 days of December, deterministic with weekend dips + upward trend
+  const drev = [], dlab = [];
+  for (let i = 0; i < 30; i++) {
+    const dow = (i + 1) % 7; // 0 = Sun-ish
+    const base = 624 + i * 6.4;
+    const wave = 64 * Math.sin(i / 2.15);
+    const weekend = dow === 6 ? -118 : dow === 0 ? -150 : 0;
+    drev.push(Math.round(base + wave + weekend));
+    dlab.push("12/" + String(i + 1).padStart(2, "0"));
+  }
+  const daily = { labels: dlab, rev: drev, target: 800, div: 16.8, xstep: 5 };
+  return { monthly, weekly, daily };
+}
+const DATA = buildData();
+
+// ---- tweakable chart config (prototype defaults) -----------------------
+const CONFIG = { accent: "#0066ff", showTarget: true, chartType: "area" };
+
+// ---- view state --------------------------------------------------------
+const STATE = { period: "monthly" };
+
+// ---- formatting helpers ------------------------------------------------
+function fmtWon(v) {              // value in 만원 → headline string
+  if (v >= 10000) return (v / 10000).toFixed(2).replace(/\.?0+$/, "") + "억";
+  return v.toLocaleString() + "만";
+}
+function fmtShort(v) {
+  if (v >= 10000) return (v / 10000).toFixed(v % 10000 ? 1 : 0) + "억";
+  if (v >= 1000) return (v / 1000).toFixed(v % 1000 ? 1 : 0) + "천";
+  return String(Math.round(v));
+}
+function niceMax(m) {
+  m = m * 1.06;
+  const p = Math.pow(10, Math.floor(Math.log10(m)));
+  for (const s of [1, 1.5, 2, 2.5, 3, 4, 5, 8, 10]) if (p * s >= m) return p * s;
+  return p * 10;
+}
+function signPct(p) { return (p >= 0 ? "+" : "") + p.toFixed(1) + "%"; }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+// ---- SVG charts --------------------------------------------------------
+function trendSVG(active, period, opts) {
+  const accent = opts.accent, showTarget = opts.showTarget, chartType = opts.chartType;
+  const W = 760, H = 290, P = { l: 42, r: 20, t: 16, b: 30 };
+  const vals = active.rev, n = vals.length;
+  const max = niceMax(Math.max(...vals, showTarget ? active.target : 0));
+  const pw = W - P.l - P.r, ph = H - P.t - P.b;
+  const X = (i) => P.l + (n <= 1 ? 0 : (i / (n - 1)) * pw);
+  const Y = (v) => P.t + (1 - v / max) * ph;
+  let s = "";
+
+  // gridlines + y labels
+  [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
+    const y = P.t + (1 - t) * ph;
+    s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y}" y2="${y}" stroke="rgba(112,115,124,0.16)" stroke-width="1"/>`;
+    s += `<text x="${P.l - 10}" y="${y + 4}" text-anchor="end" font-size="11" font-weight="500" fill="rgba(55,56,60,0.55)" font-family="var(--font-sans)">${esc(fmtShort(max * t))}</text>`;
+  });
+
+  // target dashed line
+  if (showTarget) {
+    const ty = Y(active.target);
+    s += `<line x1="${P.l}" x2="${W - P.r}" y1="${ty}" y2="${ty}" stroke="var(--color-coolNeutral-400)" stroke-width="2" stroke-dasharray="5 5"/>`;
+  }
+
+  if (chartType === "bar") {
+    const bw = Math.max((pw / n) * 0.6, 3);
+    vals.forEach((v, i) => {
+      const last = i === n - 1;
+      const x = X(i) - bw / 2, y = Y(v), hh = P.t + ph - y;
+      s += `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(hh, 0)}" rx="${Math.min(bw / 2.6, 5)}" fill="${accent}" opacity="${last ? 1 : 0.82}"/>`;
+    });
+  } else {
+    let line = "";
+    vals.forEach((v, i) => { line += (i ? "L" : "M") + X(i) + "," + Y(v) + " "; });
+    const area = line + "L" + X(n - 1) + "," + (P.t + ph) + " L" + X(0) + "," + (P.t + ph) + " Z";
+    s += `<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">` +
+         `<stop offset="0%" stop-color="${accent}" stop-opacity="0.18"/>` +
+         `<stop offset="100%" stop-color="${accent}" stop-opacity="0.01"/></linearGradient></defs>`;
+    s += `<path d="${area}" fill="url(#trendFill)"/>`;
+    s += `<path d="${line}" fill="none" stroke="${accent}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    vals.forEach((v, i) => {
+      const last = i === n - 1;
+      if (!last && i % active.xstep !== 0 && period !== "monthly") return;
+      s += `<circle cx="${X(i)}" cy="${Y(v)}" r="${last ? 5 : 3}" fill="${last ? accent : "#fff"}" stroke="${accent}" stroke-width="2"/>`;
+    });
+  }
+
+  // last-point value callout
+  const lv = vals[n - 1];
+  const lx = X(n - 1), ly = Y(lv);
+  s += `<text x="${lx}" y="${ly - 12}" text-anchor="end" font-size="13" font-weight="700" fill="${accent}" font-family="var(--font-sans)">₩${esc(fmtWon(lv))}</text>`;
+
+  // x labels
+  active.labels.forEach((lab, i) => {
+    const last = i === n - 1;
+    if (!last && i % active.xstep !== 0) return;
+    const anchor = i === 0 ? "start" : last ? "end" : "middle";
+    s += `<text x="${X(i)}" y="${H - 8}" text-anchor="${anchor}" font-size="11" font-weight="500" fill="rgba(55,56,60,0.55)" font-family="var(--font-sans)">${esc(lab)}</text>`;
+  });
+
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${s}</svg>`;
+}
+
+function donutSVG(segs) {
+  const size = 172, cx = 86, cy = 86, r = 60, sw = 22, C = 2 * Math.PI * r;
+  let off = 0, arcs = "";
+  segs.forEach((seg) => {
+    const len = (seg.pct / 100) * C;
+    const dash = Math.max(len - 2, 0);
+    arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${sw}" ` +
+            `stroke-dasharray="${dash} ${C - dash}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    off += len;
+  });
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:100%;height:auto;display:block">` +
+         `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--color-bg-muted)" stroke-width="${sw}"/>${arcs}</svg>`;
+}
+
+// ---- derive all view values from state ---------------------------------
+function renderVals() {
+  const period = STATE.period;
+  const active = DATA[period];
+  const accent = CONFIG.accent, showTarget = CONFIG.showTarget, chartType = CONFIG.chartType;
+  const n = active.rev.length;
+  const last = active.rev[n - 1], prev = active.rev[n - 2];
+  const ordLast = Math.round(last / active.div), ordPrev = Math.round(prev / active.div);
+  const aovLast = Math.round((last * 10000) / ordLast), aovPrev = Math.round((prev * 10000) / ordPrev);
+  const revD = ((last - prev) / prev) * 100;
+  const ordD = ((ordLast - ordPrev) / ordPrev) * 100;
+  const aovD = ((aovLast - aovPrev) / aovPrev) * 100;
+  const ach = (last / active.target) * 100;
+
+  const pill = (up) => {
+    const pos = up >= 0;
+    return "display:inline-flex;align-items:center;gap:2px;height:22px;padding:0 8px;border-radius:7px;white-space:nowrap;font:700 12px var(--font-sans);" +
+      (pos ? "color:#009632;background:rgba(0,191,64,0.10)" : "color:#e52222;background:rgba(229,34,34,0.10)");
+  };
+  const labelOf = { monthly: "이번 달", weekly: "이번 주", daily: "오늘" };
+  const baseLabel = labelOf[period];
+  const unitWord = period === "monthly" ? "월" : period === "weekly" ? "주" : "일";
+
+  const kpis = [
+    { label: baseLabel + " 매출", value: "₩" + fmtWon(last), delta: (revD >= 0 ? "▲ " : "▼ ") + signPct(revD).replace("+", "").replace("-", ""), pillStyle: pill(revD), sub: "직전 " + unitWord + " ₩" + fmtWon(prev) },
+    { label: "주문 건수", value: ordLast.toLocaleString() + "건", delta: (ordD >= 0 ? "▲ " : "▼ ") + signPct(ordD).replace(/[+-]/, ""), pillStyle: pill(ordD), sub: "직전 " + ordPrev.toLocaleString() + "건" },
+    { label: "평균 객단가", value: "₩" + aovLast.toLocaleString(), delta: (aovD >= 0 ? "▲ " : "▼ ") + signPct(aovD).replace(/[+-]/, ""), pillStyle: pill(aovD), sub: "직전 ₩" + aovPrev.toLocaleString() },
+    { label: "목표 달성률", value: ach.toFixed(0) + "%", delta: (ach >= 100 ? "▲ " : "▼ ") + Math.abs(ach - 100).toFixed(0) + "%", pillStyle: pill(ach - 100), sub: "목표 ₩" + fmtWon(active.target) },
+  ];
+
+  const periodOptions = [
+    { key: "daily", label: "일별" },
+    { key: "weekly", label: "주별" },
+    { key: "monthly", label: "월별" },
+  ].map((o) => ({
+    key: o.key,
+    label: o.label,
+    style: "height:34px;padding:0 18px;border:none;border-radius:9px;cursor:pointer;white-space:nowrap;font:600 14px var(--font-sans);transition:all .15s ease;" +
+      (period === o.key
+        ? "background:var(--color-bg-base);color:var(--color-fg-neutral-primary);box-shadow:var(--shadow-emphasize)"
+        : "background:transparent;color:var(--color-fg-neutral-subtle)"),
+  }));
+
+  const trendSubtitle = period === "monthly" ? "2025년 · 월별 매출 (단위 만원)"
+    : period === "weekly" ? "최근 12주 · 주별 매출 (단위 만원)"
+    : "2025년 12월 · 일별 매출 (단위 만원)";
+  const periodCaption = "회사 전체 · 2025년 12월 기준 · " + (period === "monthly" ? "월별 보기" : period === "weekly" ? "주별 보기" : "일별 보기");
+
+  // channels (this month)
+  const donutSegments = [
+    { name: "직접 · 오가닉", pct: 38, color: "var(--color-blue-600)" },
+    { name: "검색 광고", pct: 27, color: "var(--color-purple-500)" },
+    { name: "추천 · 제휴", pct: 21, color: "var(--color-cyan-600)" },
+    { name: "소셜", pct: 14, color: "var(--color-coolNeutral-400)" },
+  ].map((seg) => ({ ...seg, pctText: seg.pct + "%" }));
+
+  // products (this month, 만원)
+  const cats = [
+    { name: "프리미엄 플랜", v: 8200, color: "var(--color-blue-600)" },
+    { name: "베이직 플랜", v: 6100, color: "var(--color-purple-500)" },
+    { name: "부가 서비스", v: 4300, color: "var(--color-cyan-600)" },
+    { name: "일회성 결제", v: 3200, color: "var(--color-blue-400)" },
+    { name: "기타", v: 2000, color: "var(--color-coolNeutral-300)" },
+  ];
+  const cmax = Math.max(...cats.map((c) => c.v));
+  const catItems = cats.map((c) => ({ name: c.name, color: c.color, valueText: "₩" + fmtWon(c.v), barWidth: ((c.v / cmax) * 100).toFixed(1) + "%" }));
+
+  // weekly detail (last 5 weeks)
+  const wk = DATA.weekly;
+  const wlabels = ["11월 4주", "12월 1주", "12월 2주", "12월 3주", "12월 4주"];
+  const start = wk.rev.length - 5;
+  const weekRows = [];
+  for (let i = 0; i < 5; i++) {
+    const idx = start + i;
+    const rv = wk.rev[idx], pv = wk.rev[idx - 1];
+    const od = Math.round(rv / wk.div);
+    const av = Math.round((rv * 10000) / od);
+    const dl = ((rv - pv) / pv) * 100;
+    weekRows.push({
+      week: wlabels[i],
+      rev: "₩" + fmtWon(rv),
+      orders: od.toLocaleString() + "건",
+      aov: "₩" + av.toLocaleString(),
+      delta: signPct(dl),
+      deltaColor: dl >= 0 ? "#009632" : "#e52222",
+    });
+  }
+
+  return {
+    kpis, periodOptions, periodCaption, trendSubtitle,
+    trendChart: trendSVG(active, period, { accent, showTarget, chartType }),
+    donutChart: donutSVG(donutSegments),
+    donutCenter: "₩" + fmtWon(DATA.monthly.rev[DATA.monthly.rev.length - 1]),
+    donutSegments, catItems, weekRows,
+    accentColor: accent, showTarget,
+  };
+}
+
+// ---- CSV export --------------------------------------------------------
+function csvCell(s) {
+  s = String(s);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function exportCSV(v) {
+  const rows = [];
+  rows.push(["매출 대시보드"]);
+  rows.push([v.periodCaption]);
+  rows.push([]);
+  rows.push(["지표", "값", "증감", "비고"]);
+  v.kpis.forEach((k) => rows.push([k.label, k.value, k.delta, k.sub]));
+  rows.push([]);
+  rows.push(["채널별 매출", "비중"]);
+  v.donutSegments.forEach((s) => rows.push([s.name, s.pctText]));
+  rows.push([]);
+  rows.push(["상품별 매출", "금액"]);
+  v.catItems.forEach((c) => rows.push([c.name, c.valueText]));
+  rows.push([]);
+  rows.push(["주간 매출 상세", "매출", "주문", "객단가", "증감"]);
+  v.weekRows.forEach((w) => rows.push([w.week, w.rev, w.orders, w.aov, w.delta]));
+
+  const csv = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
+  // BOM so Excel reads UTF-8 Korean correctly
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "매출_대시보드_" + STATE.period + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---- markup ------------------------------------------------------------
+function render() {
+  const v = renderVals();
+
+  const periodBtns = v.periodOptions.map((o) =>
+    `<button data-period="${o.key}" style="${o.style}">${esc(o.label)}</button>`
+  ).join("");
+
+  const kpiCards = v.kpis.map((k) => `
+    <div style="background:var(--color-bg-base);border:1px solid var(--color-line-neutral);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="font:600 13px var(--font-sans);color:var(--color-fg-neutral-subtle);letter-spacing:0.01em;white-space:nowrap">${esc(k.label)}</span>
+        <span style="${k.pillStyle}">${esc(k.delta)}</span>
+      </div>
+      <div style="font:700 29px/1.1 var(--font-sans);letter-spacing:-0.022em">${esc(k.value)}</div>
+      <div style="font:500 12.5px var(--font-sans);color:var(--color-fg-neutral-muted)">${esc(k.sub)}</div>
+    </div>`).join("");
+
+  const targetLegend = v.showTarget
+    ? `<div style="display:flex;align-items:center;gap:7px"><span style="width:18px;height:0;border-top:2px dashed var(--color-coolNeutral-400);display:inline-block"></span><span style="font:600 12px var(--font-sans);color:var(--color-fg-neutral-subtle);white-space:nowrap">목표</span></div>`
+    : "";
+
+  const donutLegend = v.donutSegments.map((s) => `
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="width:10px;height:10px;border-radius:3px;flex:none;background:${s.color}"></span>
+      <span style="font:500 13px var(--font-sans);color:var(--color-fg-neutral);flex:1">${esc(s.name)}</span>
+      <span style="font:600 13px var(--font-sans);color:var(--color-fg-neutral-strong)">${esc(s.pctText)}</span>
+    </div>`).join("");
+
+  const catBars = v.catItems.map((c) => `
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+        <span style="font:600 13.5px var(--font-sans);color:var(--color-fg-neutral-strong)">${esc(c.name)}</span>
+        <span style="font:600 13.5px var(--font-sans);color:var(--color-fg-neutral)">${esc(c.valueText)}</span>
+      </div>
+      <div style="height:8px;border-radius:6px;background:var(--color-bg-muted);overflow:hidden">
+        <div style="height:100%;border-radius:6px;width:${c.barWidth};background:${c.color}"></div>
+      </div>
+    </div>`).join("");
+
+  const weekRows = v.weekRows.map((w) => `
+    <div style="display:grid;grid-template-columns:1.2fr 1fr 0.9fr 1fr 0.8fr;gap:8px;padding:13px 4px;border-bottom:1px solid var(--color-line-neutral-subtle);align-items:center">
+      <span style="font:600 13.5px var(--font-sans);color:var(--color-fg-neutral-strong)">${esc(w.week)}</span>
+      <span style="font:600 13.5px var(--font-sans);color:var(--color-fg-neutral);text-align:right">${esc(w.rev)}</span>
+      <span style="font:500 13.5px var(--font-sans);color:var(--color-fg-neutral);text-align:right">${esc(w.orders)}</span>
+      <span style="font:500 13.5px var(--font-sans);color:var(--color-fg-neutral);text-align:right">${esc(w.aov)}</span>
+      <span style="font:600 13px var(--font-sans);text-align:right;color:${w.deltaColor}">${esc(w.delta)}</span>
+    </div>`).join("");
+
+  document.getElementById("app").innerHTML = `
+  <div style="min-height:100vh;background:var(--color-bg-subtle);padding:28px 32px 56px;font-family:var(--font-sans);color:var(--color-fg-neutral-strong)">
+    <div style="max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+
+      <header style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:42px;height:42px;border-radius:13px;background:rgb(20,25,30);color:#fff;display:flex;align-items:center;justify-content:center;font:800 21px/1 var(--font-display);letter-spacing:-0.02em">W</div>
+          <div>
+            <div style="font:700 27px/1.15 var(--font-sans);letter-spacing:-0.026em">매출 대시보드</div>
+            <div style="font:500 13px/1.4 var(--font-sans);color:var(--color-fg-neutral-subtle);margin-top:2px">${esc(v.periodCaption)}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="display:flex;gap:3px;padding:3px;background:var(--color-bg-muted);border-radius:11px">
+            ${periodBtns}
+          </div>
+          <button class="btn-export" data-export style="display:flex;align-items:center;gap:6px;height:40px;padding:0 16px;border:1px solid var(--color-line-neutral);background:var(--color-bg-base);border-radius:11px;font:600 14px var(--font-sans);white-space:nowrap;color:var(--color-fg-neutral-strong);cursor:pointer">내보내기</button>
+        </div>
+      </header>
+
+      <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+        ${kpiCards}
+      </section>
+
+      <section style="display:grid;grid-template-columns:1.92fr 1fr;gap:16px">
+        <div style="background:var(--color-bg-base);border:1px solid var(--color-line-neutral);border-radius:16px;padding:22px 24px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+            <div>
+              <div style="font:700 18px var(--font-sans);letter-spacing:-0.012em">매출 추이</div>
+              <div style="font:500 12.5px var(--font-sans);color:var(--color-fg-neutral-subtle);margin-top:3px;white-space:nowrap">${esc(v.trendSubtitle)}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;flex:none">
+              <div style="display:flex;align-items:center;gap:7px"><span style="width:18px;height:3px;border-radius:2px;background:${v.accentColor};display:inline-block"></span><span style="font:600 12px var(--font-sans);color:var(--color-fg-neutral-subtle);white-space:nowrap">매출</span></div>
+              ${targetLegend}
+            </div>
+          </div>
+          <div style="width:100%">${v.trendChart}</div>
+        </div>
+
+        <div style="background:var(--color-bg-base);border:1px solid var(--color-line-neutral);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font:700 18px var(--font-sans);letter-spacing:-0.012em">채널별 매출</div>
+          <div style="position:relative;display:flex;align-items:center;justify-content:center;padding:4px 0">
+            <div style="width:172px">${v.donutChart}</div>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+              <span style="font:600 11.5px var(--font-sans);color:var(--color-fg-neutral-subtle);white-space:nowrap">이번 달 합계</span>
+              <span style="font:700 20px/1.2 var(--font-sans);letter-spacing:-0.02em;margin-top:2px">${esc(v.donutCenter)}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            ${donutLegend}
+          </div>
+        </div>
+      </section>
+
+      <section style="display:grid;grid-template-columns:1fr 1.62fr;gap:16px">
+        <div style="background:var(--color-bg-base);border:1px solid var(--color-line-neutral);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+          <div style="font:700 18px var(--font-sans);letter-spacing:-0.012em">상품별 매출 <span style="font:500 12.5px var(--font-sans);color:var(--color-fg-neutral-subtle)">· 이번 달</span></div>
+          <div style="display:flex;flex-direction:column;gap:15px">
+            ${catBars}
+          </div>
+        </div>
+
+        <div style="background:var(--color-bg-base);border:1px solid var(--color-line-neutral);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font:700 18px var(--font-sans);letter-spacing:-0.012em">주간 매출 상세</div>
+          <div style="display:flex;flex-direction:column">
+            <div style="display:grid;grid-template-columns:1.2fr 1fr 0.9fr 1fr 0.8fr;gap:8px;padding:0 4px 10px;border-bottom:1px solid var(--color-line-neutral)">
+              <span style="font:600 12px var(--font-sans);color:var(--color-fg-neutral-subtle)">주차</span>
+              <span style="font:600 12px var(--font-sans);color:var(--color-fg-neutral-subtle);text-align:right">매출</span>
+              <span style="font:600 12px var(--font-sans);color:var(--color-fg-neutral-subtle);text-align:right">주문</span>
+              <span style="font:600 12px var(--font-sans);color:var(--color-fg-neutral-subtle);text-align:right">객단가</span>
+              <span style="font:600 12px var(--font-sans);color:var(--color-fg-neutral-subtle);text-align:right">증감</span>
+            </div>
+            ${weekRows}
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>`;
+
+  // wire the period toggle
+  document.querySelectorAll("#app [data-period]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      STATE.period = btn.getAttribute("data-period");
+      render();
+    });
+  });
+
+  // wire the export button → download the currently-shown data as CSV
+  const exportBtn = document.querySelector("#app [data-export]");
+  if (exportBtn) exportBtn.addEventListener("click", () => exportCSV(v));
+}
+
+render();
+</script>
+</body>
+</html>
