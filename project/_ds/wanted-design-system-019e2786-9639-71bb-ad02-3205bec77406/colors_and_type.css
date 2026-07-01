@@ -1,0 +1,447 @@
+/* ============================================================
+   Wanted Design System — Colors & Typography Tokens
+   Source: Wanted Design System (Community).fig
+   License: CC BY 4.0
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   Fonts
+   ----------------------------------------------------------
+   Pretendard JP — primary body face (covers Latin + KR + JP)
+   Wanted Sans     — display / wordmark face (Wanted's own variable font)
+   SF Mono         — monospace (sparingly used for code)
+
+   Pretendard is available as a CDN webfont package.
+   Wanted Sans is published OSS by Wanted at wanted.github.io/wanted-sans.
+   ---------------------------------------------------------- */
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-jp.min.css");
+@import url("https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.4/packages/wanted-sans/fonts/webfonts/variable/complete/WantedSansVariable.min.css");
+
+:root {
+  --font-sans: "Pretendard JP", "Pretendard JP Variable", "Pretendard Variable",
+    "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: "Wanted Sans Variable", "Wanted Sans", "Pretendard JP",
+    -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+/* ============================================================
+   COLOR — Atomic Palette
+   14 ramps × ~14 stops. Direct values from the Figma Token table.
+   ============================================================ */
+:root {
+  /* Common (true neutral, no temperature) */
+  --color-common-0: #ffffff;
+  --color-common-50: #f7f7f7;
+  --color-common-100: #dcdcdc;
+  --color-common-200: #c4c4c4;
+  --color-common-300: #b0b0b0;
+  --color-common-400: #9b9b9b;
+  --color-common-500: #8a8a8a;
+  --color-common-600: #737373;
+  --color-common-700: #5c5c5c;
+  --color-common-800: #474747;
+  --color-common-850: #303030;
+  --color-common-900: #2a2a2a;
+  --color-common-950: #1c1c1c;
+  --color-common-975: #171717;
+  --color-common-985: #0f0f0f;
+  --color-common-1000: #000000;
+
+  /* Cool Neutral — Wanted's signature gray (slightly cool, used everywhere) */
+  --color-coolNeutral-0: #ffffff;
+  --color-coolNeutral-50: #f7f7f8;
+  --color-coolNeutral-75: #f4f4f5;
+  --color-coolNeutral-100: #eaebec;
+  --color-coolNeutral-150: #e1e2e4;
+  --color-coolNeutral-200: #dbdcdf;
+  --color-coolNeutral-300: #c2c4c8;
+  --color-coolNeutral-400: #aeb0b6;
+  --color-coolNeutral-500: #989ba2;
+  --color-coolNeutral-550: #878a93;
+  --color-coolNeutral-600: #70737c; /* THE most-used neutral in the system */
+  --color-coolNeutral-700: #5a5c63;
+  --color-coolNeutral-800: #46474c;
+  --color-coolNeutral-825: #37383c;
+  --color-coolNeutral-850: #333438;
+  --color-coolNeutral-875: #2e2f33;
+  --color-coolNeutral-900: #292a2d;
+  --color-coolNeutral-925: #212225;
+  --color-coolNeutral-950: #1b1c1e;
+  --color-coolNeutral-960: #171719;
+  --color-coolNeutral-970: #141415;
+  --color-coolNeutral-985: #0f0f10;
+  --color-coolNeutral-1000: #000000;
+
+  /* Blue — Primary brand action color */
+  --color-blue-50: #f7fbff;
+  --color-blue-100: #eaf2fe;
+  --color-blue-200: #c9defe;
+  --color-blue-300: #9ec5ff;
+  --color-blue-400: #69a5ff;
+  --color-blue-450: #4f95ff;
+  --color-blue-500: #3385ff;
+  --color-blue-550: #1a75ff;
+  --color-blue-600: #0066ff; /* Wanted Blue — primary CTA */
+  --color-blue-700: #005eeb;
+  --color-blue-750: #0054d1;
+  --color-blue-800: #003e9c;
+  --color-blue-900: #002966;
+  --color-blue-950: #001536;
+
+  /* Red — destructive / negative */
+  --color-red-50: #fffafa;
+  --color-red-100: #feecec;
+  --color-red-200: #fed5d5;
+  --color-red-300: #ffb5b5;
+  --color-red-400: #ff8c8c;
+  --color-red-500: #ff6363;
+  --color-red-600: #ff4242;
+  --color-red-700: #e52222; /* error text */
+  --color-red-800: #b20c0c;
+  --color-red-900: #750404;
+  --color-red-950: #3b0101;
+
+  /* Green — positive / success */
+  --color-green-50: #f2fff6;
+  --color-green-100: #d9ffe6;
+  --color-green-200: #acfcc7;
+  --color-green-300: #7df5a5;
+  --color-green-400: #49e57d;
+  --color-green-500: #1ed45a;
+  --color-green-600: #00bf40; /* success indicator */
+  --color-green-700: #009632;
+  --color-green-800: #006e25;
+  --color-green-900: #004517;
+  --color-green-950: #00240c;
+
+  /* Yellow */
+  --color-yellow-50: #fffcf7;
+  --color-yellow-100: #fef4e6;
+  --color-yellow-200: #fee6c6;
+  --color-yellow-300: #ffd49c;
+  --color-yellow-400: #ffc06e;
+  --color-yellow-500: #ffa938;
+  --color-yellow-600: #ff9200;
+  --color-yellow-700: #d47800;
+  --color-yellow-750: #d17600;
+  --color-yellow-800: #9c5800;
+  --color-yellow-900: #663a00;
+  --color-yellow-950: #361e00;
+
+  /* Orange — informational warm / notice */
+  --color-orange-50: #fffaf7;
+  --color-orange-100: #feeee5;
+  --color-orange-200: #fedbc6;
+  --color-orange-300: #ffc09c;
+  --color-orange-400: #ff9c63;
+  --color-orange-500: #ff7b2e;
+  --color-orange-600: #ff5e00; /* notice */
+  --color-orange-700: #f55a00;
+  --color-orange-800: #cc4b00;
+  --color-orange-900: #943600;
+  --color-orange-950: #5c2200;
+
+  /* Lime */
+  --color-lime-50: #f8fff2;
+  --color-lime-100: #e6ffd4;
+  --color-lime-200: #ccfca9;
+  --color-lime-300: #aef779;
+  --color-lime-400: #88f03e;
+  --color-lime-500: #6be016;
+  --color-lime-600: #58cf04;
+  --color-lime-700: #48ad00;
+  --color-lime-750: #429e00;
+  --color-lime-800: #347d00;
+  --color-lime-900: #225200;
+  --color-lime-950: #112900;
+
+  /* Cyan */
+  --color-cyan-50: #f7feff;
+  --color-cyan-100: #defaff;
+  --color-cyan-200: #b5f4ff;
+  --color-cyan-300: #8aedff;
+  --color-cyan-400: #57dff7;
+  --color-cyan-500: #28d0ed;
+  --color-cyan-600: #00bdde;
+  --color-cyan-700: #0098b2;
+  --color-cyan-800: #006f82;
+  --color-cyan-900: #004854;
+  --color-cyan-950: #00252b;
+
+  /* Sky — informational cool */
+  --color-sky-50: #f7fdff;
+  --color-sky-100: #e5f6fe;
+  --color-sky-200: #c4ecfe;
+  --color-sky-300: #a1e1ff;
+  --color-sky-400: #70d2ff;
+  --color-sky-500: #3dc2ff;
+  --color-sky-600: #00aeff;
+  --color-sky-700: #008dcf;
+  --color-sky-800: #006796;
+  --color-sky-900: #004261;
+  --color-sky-950: #002130;
+
+  /* Purple — info / highlight accent (also Korean recruit chart color) */
+  --color-purple-50: #fbfaff;
+  --color-purple-100: #f0ecfe;
+  --color-purple-200: #dbd3fe;
+  --color-purple-300: #c0b0ff;
+  --color-purple-400: #9e86fc;
+  --color-purple-500: #7d5ef7;
+  --color-purple-600: #6541f2;
+  --color-purple-650: #5b37ed;
+  --color-purple-700: #4f29e5;
+  --color-purple-800: #3a16c9;
+  --color-purple-900: #23098f;
+  --color-purple-950: #11024d;
+
+  /* Magenta */
+  --color-magenta-50: #fefbff;
+  --color-magenta-100: #f9edff;
+  --color-magenta-200: #f2d6ff;
+  --color-magenta-300: #e9baff;
+  --color-magenta-400: #de96ff;
+  --color-magenta-500: #d478ff;
+  --color-magenta-600: #cb59ff;
+  --color-magenta-700: #ad36e3;
+  --color-magenta-800: #861cb8;
+  --color-magenta-900: #580a7d;
+  --color-magenta-950: #290247;
+
+  /* Pink */
+  --color-pink-50: #fffafe;
+  --color-pink-100: #feecfb;
+  --color-pink-200: #fed3f7;
+  --color-pink-300: #ffb8f3;
+  --color-pink-400: #ff94ed;
+  --color-pink-500: #fa73e3;
+  --color-pink-600: #f553da;
+  --color-pink-700: #e846cd;
+  --color-pink-800: #d331b8;
+  --color-pink-900: #a81690;
+  --color-pink-950: #730560;
+
+  /* Opacity ramp (used with neutrals for shadows, dividers, overlays) */
+  --opacity-5: 0.05;
+  --opacity-8: 0.08;
+  --opacity-12: 0.12;
+  --opacity-16: 0.16;
+  --opacity-22: 0.22;
+  --opacity-28: 0.28;
+  --opacity-35: 0.35;
+  --opacity-43: 0.43;
+  --opacity-52: 0.52;
+  --opacity-61: 0.61;
+  --opacity-74: 0.74;
+  --opacity-88: 0.88;
+  --opacity-97: 0.97;
+}
+
+/* ============================================================
+   COLOR — Semantic (Light)
+   Defaults. Wrap a subtree in [data-theme="dark"] to swap.
+   ============================================================ */
+:root,
+[data-theme="light"] {
+  /* Brand action */
+  --color-primary: #0066ff;
+  --color-primary-hover: #005eeb;
+  --color-primary-pressed: #0054d1;
+  --color-primary-bg: #eaf2fe;
+  --color-inverse-primary: #3385ff;
+
+  /* Foreground (text/icon) */
+  --color-fg-neutral-primary: #000000;       /* highest contrast */
+  --color-fg-neutral-strong: #171719;        /* body emphasis */
+  --color-fg-neutral: rgba(46, 47, 51, 0.88);/* body */
+  --color-fg-neutral-subtle: rgba(55, 56, 60, 0.61); /* meta */
+  --color-fg-neutral-muted: rgba(112, 115, 124, 0.61); /* placeholder */
+  --color-fg-on-color: #ffffff;              /* text on filled brand bg */
+  --color-fg-positive: #00bf40;
+  --color-fg-negative: #e52222;
+  --color-fg-notice: #ff5e00;
+  --color-fg-informative: #3385ff;
+  --color-fg-accent: #6541f2;
+
+  /* Background */
+  --color-bg-base: #ffffff;
+  --color-bg-elevated: #ffffff;
+  --color-bg-subtle: #f7f7f8;
+  --color-bg-muted: rgba(112, 115, 124, 0.08);
+  --color-bg-inverse: #17171a;
+  --color-bg-overlay: rgba(23, 23, 25, 0.52);
+  --color-bg-positive: #00bf40;
+  --color-bg-negative: #ff4242;
+  --color-bg-notice: #ff5e00;
+  --color-bg-informative: #3385ff;
+  --color-bg-accent: #6541f2;
+
+  /* Line / Border */
+  --color-line-neutral: rgba(112, 115, 124, 0.22); /* default border */
+  --color-line-neutral-subtle: rgba(112, 115, 124, 0.16);
+  --color-line-neutral-strong: #989ba2;
+  --color-line-primary: #0066ff;
+
+  /* Interaction states (overlay tints on top of any color) */
+  --color-state-hover: rgba(112, 115, 124, 0.08);
+  --color-state-pressed: rgba(112, 115, 124, 0.16);
+  --color-state-focused-ring: rgba(0, 102, 255, 0.35);
+
+  /* Elevation — shadows are subtle and neutral, never colored */
+  --shadow-emphasize: 0 1px 4px 0 rgba(0, 0, 0, 0.08),
+                      0 0 1px 0 rgba(0, 0, 0, 0.08);
+  --shadow-strong: 0 4px 16px 0 rgba(0, 0, 0, 0.12),
+                   0 0 1px 0 rgba(0, 0, 0, 0.08);
+  --shadow-heavy: 0 8px 32px 0 rgba(23, 23, 23, 0.1),
+                  0 0 1px 0 rgba(23, 23, 23, 0.07);
+  --shadow-modal: 0 24px 56px 0 rgba(23, 23, 23, 0.1),
+                  0 0 1px 0 rgba(23, 23, 23, 0.06);
+}
+
+/* ============================================================
+   COLOR — Semantic (Dark)
+   ============================================================ */
+[data-theme="dark"] {
+  --color-primary: #3385ff;
+  --color-primary-hover: #4f95ff;
+  --color-primary-pressed: #69a5ff;
+  --color-primary-bg: rgba(51, 133, 255, 0.12);
+  --color-inverse-primary: #0066ff;
+
+  --color-fg-neutral-primary: #ffffff;
+  --color-fg-neutral-strong: #f7f7f8;
+  --color-fg-neutral: rgba(255, 255, 255, 0.88);
+  --color-fg-neutral-subtle: rgba(255, 255, 255, 0.61);
+  --color-fg-neutral-muted: rgba(255, 255, 255, 0.43);
+  --color-fg-on-color: #ffffff;
+  --color-fg-positive: #49e57d;
+  --color-fg-negative: #ff6363;
+  --color-fg-notice: #ff7b2e;
+  --color-fg-informative: #69a5ff;
+  --color-fg-accent: #9e86fc;
+
+  --color-bg-base: #17171a;
+  --color-bg-elevated: #1b1c1e;
+  --color-bg-subtle: #212225;
+  --color-bg-muted: rgba(255, 255, 255, 0.08);
+  --color-bg-inverse: #ffffff;
+  --color-bg-overlay: rgba(0, 0, 0, 0.61);
+
+  --color-line-neutral: rgba(255, 255, 255, 0.16);
+  --color-line-neutral-subtle: rgba(255, 255, 255, 0.08);
+  --color-line-neutral-strong: rgba(255, 255, 255, 0.43);
+  --color-line-primary: #3385ff;
+
+  --color-state-hover: rgba(255, 255, 255, 0.08);
+  --color-state-pressed: rgba(255, 255, 255, 0.16);
+}
+
+/* ============================================================
+   TYPOGRAPHY — Scale
+   Source: Typography/section/index.jsx (19 levels)
+   ============================================================ */
+:root {
+  /* Display */
+  --text-display-1-size: 56px;     --text-display-1-line: 1.286;  --text-display-1-track: -0.032em; --text-display-1-weight: 700;
+  --text-display-2-size: 40px;     --text-display-2-line: 1.3;    --text-display-2-track: -0.0282em; --text-display-2-weight: 700;
+  --text-display-3-size: 36px;     --text-display-3-line: 1.334;  --text-display-3-track: -0.027em;  --text-display-3-weight: 700;
+
+  /* Title */
+  --text-title-1-size: 32px;       --text-title-1-line: 1.375;    --text-title-1-track: -0.0253em; --text-title-1-weight: 700;
+  --text-title-2-size: 28px;       --text-title-2-line: 1.358;    --text-title-2-track: -0.0236em; --text-title-2-weight: 700;
+  --text-title-3-size: 24px;       --text-title-3-line: 1.334;    --text-title-3-track: -0.023em;  --text-title-3-weight: 700;
+
+  /* Heading */
+  --text-heading-1-size: 22px;     --text-heading-1-line: 1.364;  --text-heading-1-track: -0.0194em; --text-heading-1-weight: 700;
+  --text-heading-2-size: 20px;     --text-heading-2-line: 1.4;    --text-heading-2-track: -0.012em;  --text-heading-2-weight: 700;
+
+  /* Headline */
+  --text-headline-1-size: 18px;    --text-headline-1-line: 1.445; --text-headline-1-track: -0.002em; --text-headline-1-weight: 600;
+  --text-headline-2-size: 17px;    --text-headline-2-line: 1.412; --text-headline-2-track: 0em;      --text-headline-2-weight: 600;
+
+  /* Body */
+  --text-body-1-size: 16px;        --text-body-1-line: 1.5;       --text-body-1-track: 0.0057em;   --text-body-1-weight: 500;
+  --text-body-1-reading-line: 1.625;
+  --text-body-2-size: 15px;        --text-body-2-line: 1.467;     --text-body-2-track: 0.0096em;   --text-body-2-weight: 500;
+  --text-body-2-reading-line: 1.6;
+
+  /* Label */
+  --text-label-1-size: 14px;       --text-label-1-line: 1.429;    --text-label-1-track: 0.0145em;  --text-label-1-weight: 600;
+  --text-label-1-reading-line: 1.571;
+  --text-label-2-size: 13px;       --text-label-2-line: 1.385;    --text-label-2-track: 0.0194em;  --text-label-2-weight: 600;
+
+  /* Caption */
+  --text-caption-1-size: 12px;     --text-caption-1-line: 1.334;  --text-caption-1-track: 0.0252em; --text-caption-1-weight: 500;
+  --text-caption-2-size: 11px;     --text-caption-2-line: 1.273;  --text-caption-2-track: 0.0311em; --text-caption-2-weight: 500;
+}
+
+/* Class helpers — apply by composing class names. Korean systems
+   set tracking per-size; keep these together with the size. */
+.t-display-1 { font: 700 var(--text-display-1-size)/var(--text-display-1-line) var(--font-sans); letter-spacing: var(--text-display-1-track); }
+.t-display-2 { font: 700 var(--text-display-2-size)/var(--text-display-2-line) var(--font-sans); letter-spacing: var(--text-display-2-track); }
+.t-display-3 { font: 700 var(--text-display-3-size)/var(--text-display-3-line) var(--font-sans); letter-spacing: var(--text-display-3-track); }
+.t-title-1   { font: 700 var(--text-title-1-size)/var(--text-title-1-line) var(--font-sans);     letter-spacing: var(--text-title-1-track); }
+.t-title-2   { font: 700 var(--text-title-2-size)/var(--text-title-2-line) var(--font-sans);     letter-spacing: var(--text-title-2-track); }
+.t-title-3   { font: 700 var(--text-title-3-size)/var(--text-title-3-line) var(--font-sans);     letter-spacing: var(--text-title-3-track); }
+.t-heading-1 { font: 700 var(--text-heading-1-size)/var(--text-heading-1-line) var(--font-sans); letter-spacing: var(--text-heading-1-track); }
+.t-heading-2 { font: 700 var(--text-heading-2-size)/var(--text-heading-2-line) var(--font-sans); letter-spacing: var(--text-heading-2-track); }
+.t-headline-1 { font: 600 var(--text-headline-1-size)/var(--text-headline-1-line) var(--font-sans); letter-spacing: var(--text-headline-1-track); }
+.t-headline-2 { font: 600 var(--text-headline-2-size)/var(--text-headline-2-line) var(--font-sans); letter-spacing: var(--text-headline-2-track); }
+.t-body-1    { font: 500 var(--text-body-1-size)/var(--text-body-1-line) var(--font-sans);       letter-spacing: var(--text-body-1-track); }
+.t-body-1-reading { font: 500 var(--text-body-1-size)/var(--text-body-1-reading-line) var(--font-sans); letter-spacing: var(--text-body-1-track); }
+.t-body-2    { font: 500 var(--text-body-2-size)/var(--text-body-2-line) var(--font-sans);       letter-spacing: var(--text-body-2-track); }
+.t-body-2-reading { font: 500 var(--text-body-2-size)/var(--text-body-2-reading-line) var(--font-sans); letter-spacing: var(--text-body-2-track); }
+.t-label-1   { font: 600 var(--text-label-1-size)/var(--text-label-1-line) var(--font-sans);     letter-spacing: var(--text-label-1-track); }
+.t-label-1-reading { font: 600 var(--text-label-1-size)/var(--text-label-1-reading-line) var(--font-sans); letter-spacing: var(--text-label-1-track); }
+.t-label-2   { font: 600 var(--text-label-2-size)/var(--text-label-2-line) var(--font-sans);     letter-spacing: var(--text-label-2-track); }
+.t-caption-1 { font: 500 var(--text-caption-1-size)/var(--text-caption-1-line) var(--font-sans); letter-spacing: var(--text-caption-1-track); }
+.t-caption-2 { font: 500 var(--text-caption-2-size)/var(--text-caption-2-line) var(--font-sans); letter-spacing: var(--text-caption-2-track); }
+
+/* Semantic HTML defaults */
+h1 { font: 700 var(--text-title-1-size)/var(--text-title-1-line) var(--font-sans);   letter-spacing: var(--text-title-1-track);   margin: 0; }
+h2 { font: 700 var(--text-title-3-size)/var(--text-title-3-line) var(--font-sans);   letter-spacing: var(--text-title-3-track);   margin: 0; }
+h3 { font: 700 var(--text-heading-2-size)/var(--text-heading-2-line) var(--font-sans); letter-spacing: var(--text-heading-2-track); margin: 0; }
+h4 { font: 600 var(--text-headline-1-size)/var(--text-headline-1-line) var(--font-sans); letter-spacing: var(--text-headline-1-track); margin: 0; }
+h5 { font: 600 var(--text-headline-2-size)/var(--text-headline-2-line) var(--font-sans); letter-spacing: var(--text-headline-2-track); margin: 0; }
+h6 { font: 600 var(--text-label-1-size)/var(--text-label-1-line) var(--font-sans); letter-spacing: var(--text-label-1-track); margin: 0; }
+p  { font: 500 var(--text-body-1-size)/var(--text-body-1-line) var(--font-sans);     letter-spacing: var(--text-body-1-track);    margin: 0; }
+small { font: 500 var(--text-caption-1-size)/var(--text-caption-1-line) var(--font-sans); letter-spacing: var(--text-caption-1-track); }
+code, pre { font-family: var(--font-mono); }
+
+body { font-family: var(--font-sans); color: var(--color-fg-neutral-strong); background: var(--color-bg-base); }
+
+/* ============================================================
+   SPACING & RADIUS
+   Spacing scale doubles every step in the Figma. Radii are
+   "soft but not pillowy" — 4/8/10/12/16/24 are common.
+   ============================================================ */
+:root {
+  --space-0: 0;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 32px;
+  --space-11: 40px;
+  --space-12: 48px;
+  --space-13: 64px;
+  --space-14: 96px;
+  --space-15: 128px;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-card: 32px;   /* hero/spec cards in the design system */
+  --radius-pill: 9999px;
+}

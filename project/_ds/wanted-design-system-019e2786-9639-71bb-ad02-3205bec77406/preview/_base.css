@@ -1,0 +1,17 @@
+/* Preview card base — neutral chrome so the content speaks */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  font-family: "Pretendard JP", "Pretendard JP Variable", "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  color: #171719;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+* { box-sizing: border-box; }
+.card { padding: 24px 28px; }
+.row { display: flex; align-items: center; gap: 12px; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.mono { font-family: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; }
+.meta { font-size: 12px; line-height: 1.334; letter-spacing: 0.025em; color: rgba(55,56,60,0.61); }
+.label { font-size: 11px; line-height: 1.273; letter-spacing: 0.031em; color: rgba(55,56,60,0.61); text-transform: uppercase; font-weight: 600; }
