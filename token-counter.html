@@ -60,6 +60,11 @@
     transition:background .15s,border-color .15s}
   .theme-btn:hover{background:var(--color-state-hover)}
   .theme-btn svg{width:20px;height:20px}
+  .back-link{display:inline-flex;align-items:center;gap:5px;height:40px;padding:0 14px;border:1px solid var(--color-line-neutral);
+    background:var(--color-bg-base);color:var(--color-fg-neutral);border-radius:var(--radius-pill);
+    font:600 14px var(--font-sans);text-decoration:none;transition:background .15s}
+  .back-link:hover{background:var(--color-state-hover)}
+  .back-link svg{width:16px;height:16px;opacity:.75}
 
   /* ---- dropzone ---- */
   .card{background:var(--color-bg-base);border:1px solid var(--color-line-neutral-subtle);
@@ -172,7 +177,13 @@
         <div class="subtitle">파일을 올리면 토큰 수를 계산합니다 · 100% 브라우저 내 처리</div>
       </div>
     </div>
-    <button class="theme-btn" id="themeBtn" title="테마 전환" aria-label="테마 전환"></button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <a class="back-link" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        대시보드
+      </a>
+      <button class="theme-btn" id="themeBtn" title="테마 전환" aria-label="테마 전환"></button>
+    </div>
   </header>
 
   <!-- dropzone -->
