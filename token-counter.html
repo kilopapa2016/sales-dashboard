@@ -153,6 +153,15 @@
   .notice.show{display:flex}
   .notice svg{width:18px;height:18px;flex-shrink:0}
 
+  /* ---- busy / loading ---- */
+  .busy{display:none;align-items:center;gap:10px;margin-top:14px;padding:12px 16px;border-radius:var(--radius-lg);
+    font-size:13px;font-weight:600;background:var(--color-primary-bg);color:var(--color-primary);
+    border:1px solid var(--color-line-primary)}
+  .busy.show{display:flex}
+  .spinner{width:16px;height:16px;flex-shrink:0;border:2px solid currentColor;border-right-color:transparent;
+    border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
   footer{margin-top:40px;text-align:center;font-size:12px;color:var(--color-fg-neutral-muted);line-height:1.7}
   footer a{color:var(--color-fg-informative);text-decoration:none}
   footer a:hover{text-decoration:underline}
@@ -195,8 +204,8 @@
     </div>
     <h2>파일을 여기에 끌어다 놓으세요</h2>
     <p>또는 <span class="accent">클릭해서 선택</span> · 텍스트를 붙여넣어도 됩니다</p>
-    <div class="hint">.txt · .md · .json · .csv · .html · 소스코드 등 텍스트 파일 (최대 20MB)</div>
-    <input type="file" id="fileInput" style="display:none" accept=".txt,.md,.markdown,.json,.csv,.tsv,.html,.htm,.xml,.yaml,.yml,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.h,.cs,.go,.rs,.rb,.php,.sql,.sh,.css,.log,text/*">
+    <div class="hint">PDF · Word(.docx) · .txt · .md · .json · .csv · .html · 소스코드 등 (최대 20MB)</div>
+    <input type="file" id="fileInput" style="display:none" accept=".pdf,.docx,.txt,.md,.markdown,.json,.csv,.tsv,.html,.htm,.xml,.yaml,.yml,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.h,.cs,.go,.rs,.rb,.php,.sql,.sh,.css,.log,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/*">
   </div>
 
   <!-- controls -->
@@ -218,6 +227,11 @@
   <div class="notice" id="notice">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     <span id="noticeText"></span>
+  </div>
+
+  <div class="busy" id="busy">
+    <span class="spinner" aria-hidden="true"></span>
+    <span id="busyText"></span>
   </div>
 
   <!-- results -->
@@ -275,6 +289,7 @@
 
   <footer>
     파일과 텍스트는 서버로 전송되지 않고 브라우저에서만 처리됩니다.<br>
+    PDF는 <a href="https://cdn.jsdelivr.net/npm/pdfjs-dist" target="_blank" rel="noopener">pdf.js</a>, Word(.docx)는 <a href="https://cdn.jsdelivr.net/npm/jszip" target="_blank" rel="noopener">JSZip</a> 으로 텍스트를 추출하고,
     정확한 토큰 수는 <a href="https://cdn.jsdelivr.net/npm/gpt-tokenizer" target="_blank" rel="noopener">gpt-tokenizer</a>(tiktoken) 로 계산합니다. Claude·범용 값은 근사치입니다.
   </footer>
 </div>
@@ -341,6 +356,46 @@ function showNotice(msg) {
   $("noticeText").textContent = msg;
   $("notice").classList.add("show");
 }
+function setBusy(msg) { $("busyText").textContent = msg; $("busy").classList.add("show"); }
+function clearBusy() { $("busy").classList.remove("show"); }
+
+// ============================================================
+//  문서 텍스트 추출 (PDF / DOCX) — CDN 라이브러리를 브라우저에서 사용
+// ============================================================
+async function extractPdf(arrayBuffer) {
+  const pdfjs = await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4/build/pdf.min.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4/build/pdf.worker.min.mjs";
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(content.items.map((it) => (it.str || "") + (it.hasEOL ? "\n" : "")).join(""));
+  }
+  return pages.join("\n\n");
+}
+
+async function extractDocx(arrayBuffer) {
+  const JSZip = (await import("https://cdn.jsdelivr.net/npm/jszip@3/+esm")).default;
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  const file = zip.file("word/document.xml");
+  if (!file) throw new Error("Word 문서 본문(word/document.xml)을 찾을 수 없습니다");
+  const xml = await file.async("string");
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const paras = doc.getElementsByTagName("w:p");
+  const out = [];
+  for (const p of paras) {
+    let line = "";
+    for (const node of p.getElementsByTagName("*")) {
+      const n = node.tagName;
+      if (n === "w:t") line += node.textContent;
+      else if (n === "w:tab") line += "\t";
+      else if (n === "w:br" || n === "w:cr") line += "\n";
+    }
+    out.push(line);
+  }
+  return out.join("\n");
+}
 
 // ---- main compute ----
 async function recompute() {
@@ -395,7 +450,7 @@ function looksBinary(text) {
   // 널 문자 또는 U+FFFD(치환문자)가 많으면 바이너리로 간주
   const sample = text.slice(0, 4000);
   let bad = 0;
-  for (const ch of sample) if (ch === " " || ch === "�") bad++;
+  for (const ch of sample) if (ch === "\u0000" || ch === "�") bad++;
   return bad > sample.length * 0.02;
 }
 
@@ -404,16 +459,40 @@ async function loadFile(file) {
     showNotice("파일이 너무 큽니다 (최대 20MB). 일부만 계산하려면 텍스트를 붙여넣으세요.");
     return;
   }
-  let text;
-  try {
-    text = await file.text();
-  } catch (e) {
-    showNotice("파일을 읽지 못했습니다.");
+  showNotice("");
+  const lower = file.name.toLowerCase();
+  const isPdf = lower.endsWith(".pdf") || file.type === "application/pdf";
+  const isDocx = lower.endsWith(".docx") || file.type.includes("wordprocessingml");
+  const isDoc = lower.endsWith(".doc") && !isDocx;
+
+  if (isDoc) {
+    showNotice("구형 .doc 형식은 지원하지 않습니다. .docx 로 저장하거나 텍스트로 변환해 주세요.");
     return;
   }
-  setContent(text, { name: file.name, size: file.size, type: file.type });
-  if (looksBinary(text)) {
-    showNotice("텍스트가 아닌 파일 같습니다. 바이너리 파일의 토큰 수는 의미가 없을 수 있어요.");
+
+  try {
+    let text;
+    if (isPdf) {
+      setBusy("PDF에서 텍스트를 추출하는 중…");
+      text = await extractPdf(await file.arrayBuffer());
+    } else if (isDocx) {
+      setBusy("Word 문서에서 텍스트를 추출하는 중…");
+      text = await extractDocx(await file.arrayBuffer());
+    } else {
+      text = await file.text();
+    }
+    clearBusy();
+    setContent(text, { name: file.name, size: file.size, type: file.type });
+
+    if ((isPdf || isDocx) && text.trim() === "") {
+      showNotice("문서에서 추출된 텍스트가 없습니다. 이미지(스캔)로만 이루어진 파일일 수 있어요.");
+    } else if (!isPdf && !isDocx && looksBinary(text)) {
+      showNotice("텍스트가 아닌 파일 같습니다. 바이너리 파일의 토큰 수는 의미가 없을 수 있어요.");
+    }
+  } catch (e) {
+    clearBusy();
+    const kind = isPdf ? "PDF" : isDocx ? "Word 문서" : "파일";
+    showNotice(kind + "에서 텍스트를 추출하지 못했습니다: " + (e && e.message ? e.message : e) + " (네트워크 연결을 확인하세요)");
   }
 }
 
